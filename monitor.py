@@ -26,9 +26,9 @@ class App():
 
     def startMonitor(self):
         logging.info('Monitor started')
-        S3_SECRET_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
-        S3_ACCESS_KEY = os.environ['AWS_ACCESS_KEY_ID']
         try:
+            S3_SECRET_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
+            S3_ACCESS_KEY = os.environ['AWS_ACCESS_KEY_ID']
             logging.info(S3_ACCESS_KEY)
             self.conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,tls=True)
             persist = Persist()
