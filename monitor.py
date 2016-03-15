@@ -26,6 +26,7 @@ class App():
 
     def startMonitor(self):
         logging.info('Monitor started')
+        logging.info('Before try')
         try:
             logging.info('Inside try')
             S3_SECRET_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
@@ -39,7 +40,7 @@ class App():
             toMonitor = persist.readLastConfig(SETTINGS_FILE)
             logging.info("Settings: " +str(toMonitor))
 
-            while(True):
+            while True:
                 for monitor in toMonitor:
                     logging.info('Synching %s to %s' % (monitor['folder'], monitor['bucket']))
                     for f in listdir(monitor['folder']):
