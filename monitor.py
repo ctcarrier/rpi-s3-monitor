@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import tinys3
 import logging
 import os
@@ -35,7 +37,6 @@ class App():
 
         while(True):
             for monitor in toMonitor:
-                logging.info('Syncing ' +str(monitor['folder']))
                 logging.info('Synching %s to %s' % (monitor['folder'], monitor['bucket']))
                 for f in listdir(monitor['folder']):
                     logging.info(f)
