@@ -29,22 +29,26 @@ class App():
         self.startup()
 
     def startMonitor(self):
-        persist = Persist()
+        try:
+            persist = Persist()
 
-        # while True:
-        toMonitor = persist.readLastConfig(SETTINGS_FILE)
-        logging.info("Settings: " +str(toMonitor))
+            # while True:
+            toMonitor = persist.readLastConfig(SETTINGS_FILE)
+            logging.info("Settings: " +str(toMonitor))
 
-        while(True):
-            for monitor in toMonitor:
-                logging.info('Synching %s to %s' % (monitor['folder'], monitor['bucket']))
-                for f in listdir(monitor['folder']):
-                    logging.info(f)
-                    if isfile(join(monitor['folder'], f)):
-                        logging.info('Going to upload %s' % f)
-                        with open(join(monitor['folder'], f),'rb') as file:
-                            self.conn.upload(f,file,monitor['bucket'])
-        time.sleep(1)
+            while(True):
+                for monitor in toMonitor:
+                    logging.info('Synching %s to %s' % (monitor['folder'], monitor['bucket']))
+                    for f in listdir(monitor['folder']):
+                        logging.info(f)
+                        if isfile(join(monitor['folder'], f)):
+                            logging.info('Going to upload %s' % f)
+                            with open(join(monitor['folder'], f),'rb') as file:
+                                self.conn.upload(f,file,monitor['bucket'])
+            time.sleep(1)
+        except Exception,e:
+            logging.error("Error: %s" %(str(e)))
+            print "Error: %s" %(str(e))
 
 if __name__ == "__main__":
     app = App().run()
