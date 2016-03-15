@@ -29,6 +29,7 @@ class App():
         self.startup()
 
     def startMonitor(self):
+        logging.info('Monitor started')
         try:
             persist = Persist()
 
