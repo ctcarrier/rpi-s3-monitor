@@ -17,6 +17,6 @@ class Persist():
         with Persist.touchopen(filename, "r+") as target:
             try:
                 settings = json.load(target)
-            except ValueError:
-                settings = []
+            except ValueError,e:
+                settings = {}
             return settings
