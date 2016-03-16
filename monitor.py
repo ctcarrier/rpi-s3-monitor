@@ -73,7 +73,7 @@ class App():
                             with open(join(monitor['folder'], f),'rb') as file:
                                 self.conn.upload(f,file,monitor['bucket'])
                                 archiveFile(monitor['folder'], f)
-                time.sleep(5)
+                time.sleep(60)
         except Exception,e:
             logging.error("Error: %s at %s" %(str(e), ExceptionMessage()))
             print "Error: %s at %s" %(str(e), ExceptionMessage())
