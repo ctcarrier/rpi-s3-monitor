@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-import subprocess as sp
+import subprocess
 
 #!/usr/bin/env python
 
+import os
 from os import listdir
+from os.path import join
 import signal
 import tinys3
 import logging
@@ -17,10 +19,14 @@ import boto
 import boto.s3.connection
 import StringIO
 
+from wrappers import Identify
+from wrappers import Convert
+from s3_service import S3Service
+
 FFMPEG_BIN = "ffmpeg"
 SETTINGS_FILE = "/var/lib/s3timelapse/settings.cfg"
 OUTPUT_DIR = '/var/lib/s3timelapse/output/timelapse.mp4'
-LOG_FILENAME = '/var/log/s3timelapse/s3timelapse.log'
+LOG_FILENAME = '/var/log/s3monitor/s3monitor.log'
 __version__ = "1.0"
 
 def ExceptionMessage():
@@ -43,7 +49,11 @@ class App():
         logging.info("Settings: " +str(self.settings))
         S3_SECRET_KEY = self.settings['AWS_SECRET_ACCESS_KEY']
         S3_ACCESS_KEY = self.settings['AWS_ACCESS_KEY_ID']
-        self.DEBUG_OUTPUT_DIR = self.settings['folder']
+        self.DEBUG_OUTPUT_DIR = '/tmp'
+
+        self.identify = Identify(subprocess)
+        self.convert = Convert(subprocess)
+        self.s3_service = S3Service(S3_SECRET_KEY, S3_ACCESS_KEY)
 
         self.conn = boto.connect_s3(
             aws_access_key_id = S3_ACCESS_KEY,
@@ -59,44 +69,66 @@ class App():
     def run(self):
         self.startup()
 
-    def ffmpegPipe(self):
-        command = [ FFMPEG_BIN,
-                '-y', # (optional) overwrite output file if it exists
-                '-f', 'rawvideo',
-                '-vcodec','rawvideo',
-                '-s', '3840x2160', # size of one frame
-                '-pix_fmt', 'rgb24',
-                '-r', '24', # frames per second
-                '-i', '-', # The imput comes from a pipe
-                '-an', # Tells FFMPEG not to expect any audio
-                '-vcodec', 'mpeg',
-                OUTPUT_DIR ]
-
-        return sp.Popen( command, stdin=sp.PIPE, stderr=sp.PIPE)
-
     def start(self):
         logging.info('Timelapse monitor started')
+        processedPrefix = self.settings['processedPrefix']
         try:
             bucket = self.conn.get_bucket(self.settings['bucket'])
+            processed_bucket = self.conn.get_bucket(self.settings['processedBucket'])
             bucketList = bucket.list(self.settings['prefix'] + '/IMG')
-            # self.conn.list(self.settings['prefix'], self.settings['bucket'])
-            existingFiles = listdir(self.DEBUG_OUTPUT_DIR)
-            for item in bucketList:
-                fileName = item.name[item.name.index('/')+1 : len(item.name)]
-                print self.DEBUG_OUTPUT_DIR + fileName
-                if fileName not in existingFiles:
+            logging.info('Bucket: {} processedBucket: {}'.format(self.settings['bucket'], self.settings['processedBucket']))
+            for idx, item in enumerate(bucketList):
+
+                file_name = item.name[item.name.index('/')+1 : len(item.name)]
+                processed_file_name = '{}/{}'.format(processedPrefix, file_name)
+                print join(self.DEBUG_OUTPUT_DIR, file_name)
+                print processed_file_name
+                existing_file = bucket.get_key(processed_file_name)
+                print existing_file
+                print existing_file == None
+                if existing_file == None:
                     print 'File new, saving'
-                    fileContents = bucket.get_key(item.name).get_contents_as_string()
-                    output = StringIO.StringIO()
-                    output.write(fileContents)
-                    im = Image.open(output)
-                    resizedIm = im.resize((3840, 2560))
-                    croppedIm = resizedIm.crop((0, 0, 3840, 2160))
-                    croppedIm.save(self.DEBUG_OUTPUT_DIR + fileName)
+                    im = self.get_image_from_bucket(bucket, item.name)
+                    tmp_file_path = self.resize_and_save(im, file_name)
+                    processed_file_path = self.overlay_text(tmp_file_path, idx)
+                    logging.info('Uploading {} to bucket: {} and key {}'.format(processed_file_path, processed_bucket, file_name))
+                    self.s3_service.uploadFileToS3(processed_bucket, processed_file_name, processed_file_path)
+                    self.remove_file(tmp_file_path)
+                    self.remove_file(processed_file_path)
+
                     print 'Saved'
         except Exception,e:
             logging.error("Error: %s at %s" %(str(e), ExceptionMessage()))
             print "Error: %s at %s" %(str(e), ExceptionMessage())
+
+    def remove_file(self, file_path):
+        os.remove(file_path)
+
+    def get_image_from_bucket(self, bucket, name):
+        fileContents = bucket.get_key(name).get_contents_as_string()
+        output = StringIO.StringIO()
+        output.write(fileContents)
+        logging.info('Getting image')
+        return Image.open(output)
+
+    def resize_and_save(self, image, fileName):
+        resizedIm = image.resize((3840, 2560))
+        croppedIm = resizedIm.crop((0, 0, 3840, 2160))
+        to_save_path = join(self.DEBUG_OUTPUT_DIR, fileName)
+        logging.info('Resizing and saving to ' + to_save_path)
+        croppedIm.save(to_save_path)
+        return join(to_save_path)
+
+    def overlay_text(self, file_path, idx):
+        minutes = 10 * idx
+        hours = minutes/60
+        minuteRemainder = minutes%60
+        overlay_text = '{}:{}'.format(hours, minuteRemainder)
+        width = self.identify.width(file_path)
+        new_file_path = file_path + '.tmp'
+        logging.info('Overlaying text: {} on file: {} and saving to {}'.format(str(overlay_text), file_path, new_file_path))
+        self.convert.overlay_text(file_path, overlay_text, new_file_path)
+        return new_file_path
 
 if __name__ == "__main__":
     app = App().run()

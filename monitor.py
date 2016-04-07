@@ -18,11 +18,8 @@ __version__ = "1.0"
 ARCHIVED_FOLDER = "archived"
 
 def archiveFile(folder, fileName):
-    archivedDir = join(folder, ARCHIVED_FOLDER)
-    if not os.path.exists(archivedDir):
-        os.makedirs(archivedDir)
-    logging.info("Archiving %s"%(fileName))
-    shutil.move(join(folder, fileName), join(archivedDir, fileName))
+    logging.info("Deleting %s"%(join(folder, fileName)))
+    os.remove(join(folder, fileName))
 
 def ExceptionMessage():
     exc_type, exc_obj, tb = sys.exc_info()
