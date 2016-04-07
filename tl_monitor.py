@@ -50,6 +50,7 @@ class App():
         S3_SECRET_KEY = self.settings['AWS_SECRET_ACCESS_KEY']
         S3_ACCESS_KEY = self.settings['AWS_ACCESS_KEY_ID']
         self.DEBUG_OUTPUT_DIR = '/tmp'
+        self.start_frame = self.settings['startFrame']
 
         self.identify = Identify(subprocess)
         self.convert = Convert(subprocess)
@@ -84,8 +85,6 @@ class App():
                 print join(self.DEBUG_OUTPUT_DIR, file_name)
                 print processed_file_name
                 existing_file = bucket.get_key(processed_file_name)
-                print existing_file
-                print existing_file == None
                 if existing_file == None:
                     print 'File new, saving'
                     im = self.get_image_from_bucket(bucket, item.name)
@@ -123,8 +122,7 @@ class App():
         minutes = 10 * idx
         hours = minutes/60
         minuteRemainder = minutes%60
-        overlay_text = '{}:{}'.format(hours, minuteRemainder)
-        width = self.identify.width(file_path)
+        overlay_text = '{} hours'.format(hours)
         new_file_path = file_path + '.tmp'
         logging.info('Overlaying text: {} on file: {} and saving to {}'.format(str(overlay_text), file_path, new_file_path))
         self.convert.overlay_text(file_path, overlay_text, new_file_path)
