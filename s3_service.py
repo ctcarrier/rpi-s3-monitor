@@ -16,9 +16,5 @@ class S3Service():
         k = Key(bucket)
         k.key = key_name
         k.set_contents_from_filename(file_path,
-                                     cb=self.percent_cb, num_cb=10)
+                                     num_cb=10)
         return k
-
-    def percent_cb(complete, total, somethingElse):
-        sys.stdout.write('.')
-        sys.stdout.flush()

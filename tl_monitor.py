@@ -60,6 +60,7 @@ class App():
             aws_access_key_id = S3_ACCESS_KEY,
             aws_secret_access_key = S3_SECRET_KEY)
 
+        logging.info('Saved')
         self.start()
 
     def signal_handler(signal, frame):
@@ -78,27 +79,31 @@ class App():
             processed_bucket = self.conn.get_bucket(self.settings['processedBucket'])
             bucketList = bucket.list(self.settings['prefix'] + '/IMG')
             logging.info('Bucket: {} processedBucket: {}'.format(self.settings['bucket'], self.settings['processedBucket']))
+            first_frame = -1
             for idx, item in enumerate(bucketList):
+                if idx >= self.start_frame:
+                    if first_frame < 0:
+                        first_frame = idx
+                    file_name = item.name[item.name.index('/')+1 : len(item.name)]
+                    processed_file_name = '{}/{}'.format(processedPrefix, file_name)
+                    logging.info(join(self.DEBUG_OUTPUT_DIR, file_name))
+                    logging.info(processed_file_name)
+                    existing_file = bucket.get_key(processed_file_name)
+                    if existing_file == None:
+                        logging.info('File new, saving')
+                        im = self.get_image_from_bucket(bucket, item.name)
+                        tmp_file_path = self.resize_and_save(im, file_name)
+                        processed_file_path = self.overlay_text(tmp_file_path, (idx - first_frame + 1))
+                        logging.info('Uploading {} to bucket: {} and key {}'.format(processed_file_path, processed_bucket, file_name))
+                        self.s3_service.uploadFileToS3(processed_bucket, processed_file_name, processed_file_path)
+                        self.remove_file(tmp_file_path)
+                        self.remove_file(processed_file_path)
 
-                file_name = item.name[item.name.index('/')+1 : len(item.name)]
-                processed_file_name = '{}/{}'.format(processedPrefix, file_name)
-                print join(self.DEBUG_OUTPUT_DIR, file_name)
-                print processed_file_name
-                existing_file = bucket.get_key(processed_file_name)
-                if existing_file == None:
-                    print 'File new, saving'
-                    im = self.get_image_from_bucket(bucket, item.name)
-                    tmp_file_path = self.resize_and_save(im, file_name)
-                    processed_file_path = self.overlay_text(tmp_file_path, idx)
-                    logging.info('Uploading {} to bucket: {} and key {}'.format(processed_file_path, processed_bucket, file_name))
-                    self.s3_service.uploadFileToS3(processed_bucket, processed_file_name, processed_file_path)
-                    self.remove_file(tmp_file_path)
-                    self.remove_file(processed_file_path)
-
-                    print 'Saved'
+                        logging.info('Saved')
+                else:
+                    logging.info('Skipping {}'.format(idx))
         except Exception,e:
             logging.error("Error: %s at %s" %(str(e), ExceptionMessage()))
-            print "Error: %s at %s" %(str(e), ExceptionMessage())
 
     def remove_file(self, file_path):
         os.remove(file_path)
@@ -119,14 +124,12 @@ class App():
         return join(to_save_path)
 
     def overlay_text(self, file_path, idx):
-        print 1
         minutes = 10 * idx
         hours = minutes/60
         minuteRemainder = minutes%60
         overlay_text = '{} hours'.format(hours)
         new_file_path = file_path + '.tmp'
         logging.info('Overlaying text: {} on file: {} and saving to {}'.format(str(overlay_text), file_path, new_file_path))
-        print 2
         self.convert.overlay_text(file_path, overlay_text, new_file_path)
         return new_file_path
 
