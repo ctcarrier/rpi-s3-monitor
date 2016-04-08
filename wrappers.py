@@ -45,7 +45,11 @@ class Convert(Wrapper):
         self._CMD = 'convert'
 
     def overlay_text(self, filepath, text, outpath):
+        print filepath
+        print text
+        print outpath
+
         code, out, err = self.call(self._CMD + ' -background "#0008" -fill white -gravity center -size 3840x300 '
-            + 'caption:' + text+ ' '
+            + 'caption:\'' + text+ '\' '
             + filepath + ' +swap -gravity south -composite  ' + outpath )
         return out

@@ -119,12 +119,14 @@ class App():
         return join(to_save_path)
 
     def overlay_text(self, file_path, idx):
+        print 1
         minutes = 10 * idx
         hours = minutes/60
         minuteRemainder = minutes%60
         overlay_text = '{} hours'.format(hours)
         new_file_path = file_path + '.tmp'
         logging.info('Overlaying text: {} on file: {} and saving to {}'.format(str(overlay_text), file_path, new_file_path))
+        print 2
         self.convert.overlay_text(file_path, overlay_text, new_file_path)
         return new_file_path
 
