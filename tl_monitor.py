@@ -126,12 +126,20 @@ class App():
     def overlay_text(self, file_path, idx):
         minutes = 10 * idx
         hours = minutes/60
+        days = hours/24
+        hoursRemainder = hours % 24
         minuteRemainder = minutes%60
-        overlay_text = '{} hours'.format(hours)
+        overlay_text = '{}:{}'.format(days, self.as_two_digits(hoursRemainder))
         new_file_path = file_path + '.tmp'
         logging.info('Overlaying text: {} on file: {} and saving to {}'.format(str(overlay_text), file_path, new_file_path))
         self.convert.overlay_text(file_path, overlay_text, new_file_path)
         return new_file_path
+
+    def as_two_digits(self, number):
+        if number < 10:
+            return '0' + number
+        else:
+            return str(number)
 
 if __name__ == "__main__":
     app = App().run()
