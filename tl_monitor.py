@@ -137,7 +137,7 @@ class App():
 
     def as_two_digits(self, number):
         if number < 10:
-            return '0' + number
+            return '0' + str(number)
         else:
             return str(number)
 
