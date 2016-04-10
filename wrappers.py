@@ -45,7 +45,7 @@ class Convert(Wrapper):
         self._CMD = 'convert'
 
     def overlay_text(self, filepath, text, outpath):
-        code, out, err = self.call(self._CMD + ' -background "#0008" -fill white -gravity center -size 3840x300 -font ~/.fonts/UbuntuMono-R.ttf '
+        code, out, err = self.call(self._CMD + ' -background "#0008" -fill white -gravity center -size 3840x300 -font ~/.fonts/DroidSansMono.ttf '
             + 'label:\'' + text+ '\' '
             + filepath + ' +swap -gravity south -composite  ' + outpath )
         return out
