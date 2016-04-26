@@ -129,7 +129,7 @@ class App():
         days = hours/24
         hoursRemainder = hours % 24
         minuteRemainder = minutes%60
-        overlay_text = '{}d {}h'.format(days, self.as_two_digits(hoursRemainder))
+        overlay_text = '{}d'.format(days)
         new_file_path = file_path + '.tmp'
         logging.info('Overlaying text: {} on file: {} and saving to {}'.format(str(overlay_text), file_path, new_file_path))
         self.convert.overlay_text(file_path, overlay_text, new_file_path)
