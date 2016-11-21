@@ -47,9 +47,12 @@ class App():
         try:
             existingFiles = listdir(getcwd())
             for file in existingFiles:
-                print file
+                fileName = file[:-4]
+                extension = file[-4:]
                 img = Image.open(file)
-                #self.resize_and_save(img, file)
+                saveFile = fileName + '-proc' + extension
+                print saveFile
+                self.resize_and_save(img, saveFile)
         except Exception,e:
             logging.error("Error: %s at %s" %(str(e), ExceptionMessage()))
             print "Error: %s at %s" %(str(e), ExceptionMessage())
