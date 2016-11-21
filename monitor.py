@@ -62,13 +62,15 @@ class App():
 
             while True:
                 for monitor in toMonitor:
+                    prefix = monitor['prefix']
                     for f in listdir(monitor['folder']):
                         logging.info('%s a folder? %s' % (join(monitor['folder'], f), isdir(join(monitor['folder'], f))))
                         if not isdir(join(monitor['folder'], f)):
                             logging.info('Synching %s to %s' % (f, monitor['bucket']))
                             logging.info('Going to upload %s' % f)
                             with open(join(monitor['folder'], f),'rb') as file:
-                                self.conn.upload(f,file,monitor['bucket'])
+                                key = ('%s/%s' % (prefix, f))
+                                self.conn.upload(key,file,monitor['bucket'])
                                 archiveFile(monitor['folder'], f)
                 time.sleep(60)
         except Exception,e:
