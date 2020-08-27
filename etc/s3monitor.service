@@ -1,0 +1,11 @@
+[Unit]
+Description=S3 Monitor
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /usr/src/rpi-s3-monitor/monitor.py
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
