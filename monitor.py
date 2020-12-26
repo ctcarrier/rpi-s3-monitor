@@ -66,12 +66,17 @@ class App():
                     for f in listdir(monitor['folder']):
                         logging.info('%s a folder? %s' % (join(monitor['folder'], f), isdir(join(monitor['folder'], f))))
                         if not isdir(join(monitor['folder'], f)):
-                            logging.info('Synching %s to %s' % (f, monitor['bucket']))
+                            logging.info('Synching %s to %s/%s' % (f, monitor['bucket'], prefix))
                             logging.info('Going to upload %s' % f)
                             with open(join(monitor['folder'], f),'rb') as file:
                                 key = ('%s/%s' % (prefix, f))
-                                self.conn.upload(key,file,monitor['bucket'])
-                                archiveFile(monitor['folder'], f)
+				try:
+                                    self.conn.upload(key,file,monitor['bucket'])
+                                    archiveFile(monitor['folder'], f)
+				except Exception,e:
+				    logging.error('Problem uploading %s' % f)
+				    logging.error("Error: %s at %s" %(str(e), ExceptionMessage()))
+			            print "Error: %s at %s" %(str(e), ExceptionMessage())
                 time.sleep(60)
         except Exception,e:
             logging.error("Error: %s at %s" %(str(e), ExceptionMessage()))
